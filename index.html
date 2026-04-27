@@ -1,693 +1,603 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tenaris – Industrial Operations Headcount Map</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tenaris – Industrial Operations Headcount</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#F5F6FA;color:#1B2A4A;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+/* HEADER */
+header{
+  background:#fff;border-bottom:2px solid #D0D7E3;
+  padding:8px 20px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 6px rgba(0,0,0,0.07);z-index:1000;flex-shrink:0;
+}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.tenaris-logo{display:flex;flex-direction:column;gap:2px;width:32px;}
+.tenaris-logo div{height:4px;border-radius:1px;}
+.tenaris-logo div:nth-child(1){background:#2E7D32;width:32px;}
+.tenaris-logo div:nth-child(2){background:#1A3A6B;width:32px;}
+.tenaris-logo div:nth-child(3){background:#C8102E;width:32px;}
+.hdr-brand{font-size:1.1rem;font-weight:700;color:#1B2A4A;letter-spacing:-.3px;}
+.hdr-sep{color:#D0D7E3;font-size:1.2rem;margin:0 6px;}
+.hdr-title{font-size:.88rem;font-weight:600;color:#1B2A4A;}
+.hdr-sub{font-size:.68rem;color:#8A96A8;font-weight:400;margin-top:1px;}
+.badge-conf{
+  background:#fff0f5;border:1.5px solid #9B1B6E;color:#9B1B6E;
+  border-radius:4px;padding:4px 12px;font-size:.68rem;font-weight:700;
+  letter-spacing:.3px;
+}
 
-  <style>
-    :root {
-      --tenaris-red:   #C8102E;
-      --tenaris-dark:  #1a1a2e;
-      --tenaris-gray:  #2d2d2d;
-      --tenaris-light: #f5f5f5;
-      --accent-blue:   #1565C0;
-      --accent-green:  #2E7D32;
-      --accent-orange: #E65100;
-      --accent-purple: #6A1B9A;
-      --card-bg:       #ffffff;
-      --shadow:        0 2px 12px rgba(0,0,0,0.10);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #222; }
+/* KPI BAR */
+.kpi-bar{
+  display:flex;background:#1B2A4A;flex-shrink:0;
+  border-bottom:3px solid #9B1B6E;
+}
+.kpi-item{
+  flex:1;padding:8px 18px;border-right:1px solid rgba(255,255,255,0.1);
+  display:flex;flex-direction:column;gap:1px;
+}
+.kpi-item:last-child{border-right:none;}
+.kpi-val{font-size:1.35rem;font-weight:700;color:#fff;line-height:1;}
+.kpi-lbl{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.5);margin-top:2px;}
+.kpi-item.accent .kpi-val{color:#F0A0C8;}
+.kpi-item.accent2 .kpi-val{color:#7EC8E3;}
+.kpi-item.accent3 .kpi-val{color:#A8D5A2;}
 
-    /* ── HEADER ── */
-    header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #2d2d2d 60%, #C8102E 100%);
-      color: #fff; padding: 14px 28px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-      position: sticky; top: 0; z-index: 1100;
-    }
-    header .brand { display: flex; align-items: center; gap: 14px; }
-    header .brand .logo-box {
-      background: #C8102E; border-radius: 8px;
-      width: 42px; height: 42px; display: flex; align-items: center;
-      justify-content: center; font-weight: 700; font-size: 18px; letter-spacing:1px;
-    }
-    header h1 { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
-    header h1 span { font-weight: 300; font-size: 0.85rem; display:block; opacity:.75; }
-    .header-badge {
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 20px; padding: 5px 14px; font-size: 0.75rem; font-weight: 500;
-    }
+/* MAIN */
+.main{display:flex;flex:1;overflow:hidden;}
 
-    /* ── KPI BAR ── */
-    .kpi-bar {
-      display: flex; gap: 14px; padding: 14px 24px; flex-wrap: wrap;
-      background: #fff; border-bottom: 1px solid #e0e0e0;
-    }
-    .kpi-card {
-      flex: 1; min-width: 140px; background: var(--card-bg);
-      border-radius: 10px; padding: 12px 18px;
-      box-shadow: var(--shadow); border-left: 4px solid var(--tenaris-red);
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .kpi-card.blue  { border-left-color: var(--accent-blue); }
-    .kpi-card.green { border-left-color: var(--accent-green); }
-    .kpi-card.orange{ border-left-color: var(--accent-orange); }
-    .kpi-card .kpi-value { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; }
-    .kpi-card .kpi-label { font-size: 0.72rem; color: #666; font-weight: 500; text-transform: uppercase; letter-spacing:.5px; }
+/* SIDEBAR */
+.sidebar{
+  width:280px;min-width:280px;background:#fff;
+  border-right:2px solid #D0D7E3;
+  display:flex;flex-direction:column;overflow-y:auto;
+  box-shadow:2px 0 8px rgba(0,0,0,0.05);
+}
+.sb-section{padding:12px 14px;border-bottom:1px solid #EEF0F5;}
+.sb-section-title{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;color:#9B1B6E;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.sb-section-title span{font-size:.6rem;color:#8A96A8;font-weight:400;text-transform:none;}
 
-    /* ── MAIN LAYOUT ── */
-    .main-layout { display: flex; height: calc(100vh - 130px); min-height: 520px; }
+/* PROCESS TABLE */
+.proc-table{width:100%;border-collapse:collapse;font-size:.72rem;}
+.proc-table thead tr th{
+  background:#1B2A4A;color:rgba(255,255,255,.85);
+  padding:5px 7px;font-size:.6rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.proc-table thead tr th:last-child{text-align:right;}
+.proc-table tbody tr{cursor:pointer;transition:background .15s;}
+.proc-table tbody tr:nth-child(even){background:#F8F9FC;}
+.proc-table tbody tr:hover{background:#EEF3FF;}
+.proc-table tbody tr.inactive{opacity:.3;}
+.proc-table tbody tr.inactive td .proc-name{text-decoration:line-through;}
+.proc-table td{padding:5px 7px;vertical-align:middle;}
+.proc-table td:last-child{text-align:right;font-weight:700;color:#1B2A4A;font-size:.75rem;}
+.proc-cell{display:flex;align-items:center;gap:6px;}
+.psq{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.proc-name{color:#1B2A4A;font-size:.72rem;}
+.proc-table tfoot tr td{
+  background:#1B2A4A;color:#fff;font-weight:700;
+  padding:5px 7px;font-size:.72rem;
+}
+.proc-table tfoot tr td:last-child{text-align:right;}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 270px; min-width: 240px; background: #fff;
-      border-right: 1px solid #e0e0e0;
-      display: flex; flex-direction: column; overflow-y: auto;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
-    }
-    .sidebar-section { padding: 16px 18px; border-bottom: 1px solid #f0f0f0; }
-    .sidebar-section h3 {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; color: #888; margin-bottom: 10px;
-    }
-    .filter-group label {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.82rem; padding: 4px 2px; cursor: pointer;
-      border-radius: 5px; transition: background .15s;
-    }
-    .filter-group label:hover { background: #f5f5f5; }
-    .filter-group input[type=checkbox] { accent-color: var(--tenaris-red); width:14px; height:14px; }
-    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+/* REGION DROPDOWN (PowerBI style) */
+.pbi-dropdown{position:relative;width:100%;}
+.pbi-dropdown-btn{
+  width:100%;padding:6px 10px;border:1px solid #D0D7E3;
+  border-radius:4px;background:#fff;color:#1B2A4A;
+  font-size:.75rem;font-family:'Inter',sans-serif;
+  cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  transition:border-color .2s;
+}
+.pbi-dropdown-btn:hover{border-color:#9B1B6E;}
+.pbi-dropdown-btn.open{border-color:#9B1B6E;border-bottom-color:transparent;border-radius:4px 4px 0 0;}
+.pbi-arrow{font-size:.6rem;color:#8A96A8;transition:transform .2s;}
+.pbi-dropdown-btn.open .pbi-arrow{transform:rotate(180deg);}
+.pbi-panel{
+  display:none;position:absolute;top:100%;left:0;right:0;
+  background:#fff;border:1px solid #9B1B6E;border-top:none;
+  border-radius:0 0 4px 4px;z-index:300;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  max-height:220px;overflow-y:auto;
+}
+.pbi-panel.open{display:block;}
+.pbi-ctrl{
+  display:flex;gap:0;border-bottom:1px solid #EEF0F5;
+  font-size:.65rem;
+}
+.pbi-ctrl button{
+  flex:1;padding:5px 4px;border:none;background:none;
+  cursor:pointer;color:#9B1B6E;font-weight:600;font-size:.65rem;
+  font-family:'Inter',sans-serif;
+  transition:background .15s;
+}
+.pbi-ctrl button:hover{background:#FFF0F8;}
+.pbi-ctrl button:first-child{border-right:1px solid #EEF0F5;}
+.pbi-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;cursor:pointer;font-size:.75rem;
+  transition:background .15s;
+  border-bottom:1px solid #F8F9FC;
+}
+.pbi-item:hover{background:#F5F6FA;}
+.pbi-item input[type=checkbox]{
+  accent-color:#9B1B6E;width:13px;height:13px;cursor:pointer;flex-shrink:0;
+}
+.pbi-item label{cursor:pointer;color:#1B2A4A;font-size:.75rem;}
+.pbi-selected-text{font-size:.68rem;color:#9B1B6E;margin-top:4px;font-weight:500;}
 
-    .btn-reset {
-      margin: 14px 18px; padding: 9px 0; width: calc(100% - 36px);
-      background: var(--tenaris-red); color: #fff; border: none;
-      border-radius: 8px; font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; transition: background .2s;
-    }
-    .btn-reset:hover { background: #a00d24; }
+/* CORPORATE TABLE */
+.corp-table{width:100%;border-collapse:collapse;font-size:.72rem;}
+.corp-table thead tr th{
+  background:#6D1040;color:rgba(255,255,255,.9);
+  padding:5px 7px;font-size:.6rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.corp-table thead tr th:last-child{text-align:right;}
+.corp-table tbody tr{background:#FFF5FA;}
+.corp-table tbody tr:nth-child(even){background:#FFEAF4;}
+.corp-table td{padding:5px 7px;vertical-align:middle;}
+.corp-table td:last-child{text-align:right;font-weight:700;color:#6D1040;}
+.corp-table tfoot tr td{background:#6D1040;color:#fff;font-weight:700;padding:5px 7px;}
+.corp-table tfoot tr td:last-child{text-align:right;}
 
-    /* Toggle view */
-    .toggle-view {
-      display: flex; margin: 0 18px 14px; border-radius: 8px;
-      overflow: hidden; border: 1px solid #ddd;
-    }
-    .toggle-view button {
-      flex: 1; padding: 7px 4px; border: none; font-size: 0.75rem;
-      font-weight: 600; cursor: pointer; transition: all .2s;
-      background: #f5f5f5; color: #555;
-    }
-    .toggle-view button.active { background: var(--tenaris-red); color: #fff; }
+/* RESET BTN */
+.btn-reset{
+  margin:12px 14px;padding:8px;width:calc(100% - 28px);
+  background:#9B1B6E;color:#fff;border:none;border-radius:5px;
+  font-size:.75rem;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:background .2s;
+}
+.btn-reset:hover{background:#7a1557;}
 
-    /* ── MAP AREA ── */
-    .map-container { flex: 1; display: flex; flex-direction: column; }
-    #map { flex: 1; min-height: 350px; }
+/* MAP */
+#map{flex:1;min-height:0;}
 
-    /* ── BOTTOM CHART PANEL ── */
-    .bottom-panel {
-      height: 210px; background: #fff;
-      border-top: 1px solid #e0e0e0;
-      display: flex; flex-direction: column;
-      padding: 10px 20px; gap: 6px;
-    }
-    .bottom-panel h3 {
-      font-size: 0.78rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing:.5px; color:#555;
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .bottom-panel canvas { flex: 1; }
+/* POPUP */
+.leaflet-popup-content-wrapper{
+  border-radius:8px!important;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15)!important;
+  padding:0!important;border:1px solid #D0D7E3;
+}
+.leaflet-popup-content{margin:0!important;width:220px!important;}
+.pu-head{background:#1B2A4A;color:#fff;padding:9px 12px;border-radius:8px 8px 0 0;}
+.pu-head h4{font-size:.82rem;font-weight:700;margin:0;}
+.pu-head p{font-size:.65rem;color:rgba(255,255,255,.55);margin:2px 0 0;}
+.pu-body{padding:8px 12px;}
+.pu-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:.72rem;border-bottom:1px solid #F5F5F5;}
+.pu-row:last-child{border-bottom:none;}
+.pu-proc{display:flex;align-items:center;gap:5px;color:#444;}
+.pu-count{font-weight:700;color:#1B2A4A;font-size:.75rem;}
+.pu-total{margin-top:6px;padding-top:6px;border-top:2px solid #EEF0F5;display:flex;justify-content:space-between;font-size:.75rem;font-weight:700;}
+.pu-total span:last-child{color:#9B1B6E;}
 
-    /* ── DATA TABLE MODAL ── */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5); z-index: 2000;
-      align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      background: #fff; border-radius: 12px;
-      width: 90vw; max-width: 960px; max-height: 82vh;
-      overflow: hidden; display: flex; flex-direction: column;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
-    }
-    .modal-header {
-      padding: 16px 22px; background: var(--tenaris-dark); color: #fff;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .modal-header h2 { font-size: 1rem; font-weight: 600; }
-    .modal-close {
-      background: none; border: none; color: #fff;
-      font-size: 1.4rem; cursor: pointer; padding: 0 4px; line-height:1;
-    }
-    .modal-body { overflow-y: auto; padding: 20px; }
-
-    table.data-table {
-      width: 100%; border-collapse: collapse; font-size: 0.78rem;
-    }
-    table.data-table th {
-      background: #1a1a2e; color: #fff; padding: 8px 10px;
-      text-align: center; font-weight: 600; position: sticky; top:0;
-    }
-    table.data-table th:first-child,
-    table.data-table th:nth-child(2) { text-align: left; }
-    table.data-table td { padding: 7px 10px; border-bottom: 1px solid #eee; text-align:center; }
-    table.data-table td:first-child { text-align:left; font-weight:600; }
-    table.data-table td:nth-child(2){ text-align:left; }
-    table.data-table tr:hover td { background: #fef0f2; }
-    table.data-table tr.total-row td { background:#1a1a2e; color:#fff; font-weight:700; }
-    table.data-table tr.industrial-row td { background:#fff0f2; font-style:italic; }
-    .cell-value { font-weight:600; color: var(--tenaris-red); }
-    .cell-zero  { color: #ccc; }
-
-    /* ── SHOW TABLE BUTTON (floating) ── */
-    .fab-table {
-      position: fixed; bottom: 24px; right: 24px; z-index: 1050;
-      background: var(--tenaris-dark); color: #fff;
-      border: none; border-radius: 50px; padding: 12px 20px;
-      font-size: 0.82rem; font-weight: 600; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3); display:flex; gap:7px; align-items:center;
-      transition: background .2s;
-    }
-    .fab-table:hover { background: var(--tenaris-red); }
-
-    /* ── POPUP STYLES ── */
-    .leaflet-popup-content-wrapper { border-radius: 10px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important; }
-    .popup-title { font-weight:700; font-size:1rem; color:#1a1a2e; margin-bottom:6px; border-bottom:2px solid var(--tenaris-red); padding-bottom:4px; }
-    .popup-hc    { font-size:0.82rem; color:#555; margin-bottom:8px; }
-    .popup-hc strong { color:var(--tenaris-red); font-size:1.05rem; }
-    .popup-table { width:100%; border-collapse:collapse; font-size:0.75rem; }
-    .popup-table th { background:#f0f0f0; padding:4px 6px; text-align:left; }
-    .popup-table td { padding:3px 6px; border-bottom:1px solid #f0f0f0; }
-    .popup-table td:last-child { text-align:right; font-weight:600; color:var(--tenaris-red); }
-
-    @media(max-width:700px){
-      .sidebar{ width:0; min-width:0; overflow:hidden; }
-      .kpi-card .kpi-value { font-size:1.2rem; }
-    }
-  </style>
+/* FOOTER */
+footer{
+  background:#1B2A4A;color:rgba(255,255,255,.55);
+  font-size:.65rem;padding:5px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+footer strong{color:rgba(255,255,255,.85);}
+</style>
 </head>
 <body>
 
-<!-- ══ HEADER ══ -->
+<!-- HEADER -->
 <header>
-  <div class="brand">
-    <div class="logo-box">T</div>
-    <h1>Industrial Operations – Headcount Map
-      <span>Technologists by Region &amp; Process · Data: Sep 2025</span>
-    </h1>
+  <div class="hdr-left">
+    <div class="tenaris-logo"><div></div><div></div><div></div></div>
+    <span class="hdr-brand">Tenaris</span>
+    <span class="hdr-sep">|</span>
+    <div>
+      <div class="hdr-title">Industrial Operations – Headcount Map</div>
+      <div class="hdr-sub">Technologists by Region &amp; Process · Data: Sep 2025</div>
+    </div>
   </div>
-  <div class="header-badge">🔒 Highly Confidential</div>
+  <div class="badge-conf">🔒 HIGHLY CONFIDENTIAL</div>
 </header>
 
-<!-- ══ KPI BAR ══ -->
+<!-- KPI BAR -->
 <div class="kpi-bar">
-  <div class="kpi-card">
-    <div class="kpi-value">260</div>
-    <div class="kpi-label">Total Technologists</div>
+  <div class="kpi-item accent">
+    <div class="kpi-val" id="kpi-total">260</div>
+    <div class="kpi-lbl">Total Technologists</div>
   </div>
-  <div class="kpi-card blue">
-    <div class="kpi-value">50</div>
-    <div class="kpi-label">Corporate (Industrial)</div>
+  <div class="kpi-item accent2">
+    <div class="kpi-val" id="kpi-corp">50</div>
+    <div class="kpi-lbl">Corporate · Industrial</div>
   </div>
-  <div class="kpi-card green">
-    <div class="kpi-value">210</div>
-    <div class="kpi-label">Regional (Business Ops)</div>
+  <div class="kpi-item accent3">
+    <div class="kpi-val" id="kpi-reg">210</div>
+    <div class="kpi-lbl">Regional · Business Ops</div>
   </div>
-  <div class="kpi-card orange">
-    <div class="kpi-value">10</div>
-    <div class="kpi-label">Regions / OUs</div>
-  </div>
-  <div class="kpi-card" style="border-left-color:#6A1B9A">
-    <div class="kpi-value">19,387</div>
-    <div class="kpi-label">Total Industrial Headcount</div>
+  <div class="kpi-item">
+    <div class="kpi-val" id="kpi-ou">10</div>
+    <div class="kpi-lbl">Active Regions</div>
   </div>
 </div>
 
-<!-- ══ MAIN ══ -->
-<div class="main-layout">
+<!-- MAIN -->
+<div class="main">
 
   <!-- SIDEBAR -->
   <div class="sidebar">
 
-    <div class="sidebar-section" style="padding-bottom:8px">
-      <h3>Vista del Mapa</h3>
-      <div class="toggle-view">
-        <button id="btnViewTC" class="active" onclick="setView('tech')">Tecnólogos</button>
-        <button id="btnViewHC" onclick="setView('headcount')">Headcount Total</button>
+    <!-- PROCESS TABLE -->
+    <div class="sb-section">
+      <div class="sb-section-title">Filter by Process <span>(click row to toggle)</span></div>
+      <table class="proc-table" id="procTable">
+        <thead><tr><th>Process</th><th>Total</th></tr></thead>
+        <tbody id="procTbody"></tbody>
+        <tfoot><tr><td>Grand Total</td><td id="procGrandTotal">210</td></tr></tfoot>
+      </table>
+    </div>
+
+    <!-- REGION DROPDOWN -->
+    <div class="sb-section">
+      <div class="sb-section-title">Filter by Region</div>
+      <div class="pbi-dropdown" id="regionDropdown">
+        <button class="pbi-dropdown-btn" id="dropBtn" onclick="toggleDropdown()">
+          <span id="dropLabel">All Regions (10)</span>
+          <span class="pbi-arrow">▼</span>
+        </button>
+        <div class="pbi-panel" id="dropPanel">
+          <div class="pbi-ctrl">
+            <button onclick="selectAllRegions()">Select All</button>
+            <button onclick="clearAllRegions()">Clear</button>
+          </div>
+          <div id="regionCheckboxes"></div>
+        </div>
       </div>
+      <div class="pbi-selected-text" id="selectedRegText"></div>
     </div>
 
-    <div class="sidebar-section">
-      <h3>Filtrar por Proceso</h3>
-      <div class="filter-group" id="filterProcess"></div>
+    <!-- CORPORATE TABLE -->
+    <div class="sb-section">
+      <div class="sb-section-title">Corporate · Industrial
+        <span style="color:#9B1B6E;font-style:italic">(Global – not on map)</span>
+      </div>
+      <table class="corp-table" id="corpTable">
+        <thead><tr><th>Process</th><th>HC</th></tr></thead>
+        <tbody id="corpTbody"></tbody>
+        <tfoot><tr><td>Total Corporate</td><td id="corpTotal">50</td></tr></tfoot>
+      </table>
     </div>
 
-    <div class="sidebar-section">
-      <h3>Filtrar por Región / OU</h3>
-      <div class="filter-group" id="filterRegion"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3>Tipo de Organización</h3>
-      <div class="filter-group" id="filterType"></div>
-    </div>
-
-    <button class="btn-reset" onclick="resetFilters()">↺ Resetear Filtros</button>
+    <button class="btn-reset" onclick="resetAll()">↺ Reset All Filters</button>
   </div>
 
-  <!-- MAP + CHART -->
-  <div class="map-container">
-    <div id="map"></div>
-    <div class="bottom-panel">
-      <h3>Tecnólogos por Proceso
-        <span id="chartSubtitle" style="font-weight:400;font-size:0.72rem;color:#aaa;">— todos los filtros</span>
-      </h3>
-      <canvas id="processChart"></canvas>
-    </div>
-  </div>
+  <!-- MAP -->
+  <div id="map"></div>
 </div>
 
-<!-- ══ FLOATING BUTTON ══ -->
-<button class="fab-table" onclick="openModal()">📋 Ver Tabla Completa</button>
-
-<!-- ══ MODAL ══ -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2>📋 Tabla de Headcount – Tecnólogos por Proceso y Región</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <table class="data-table" id="dataTable"></table>
-    </div>
-  </div>
-</div>
+<!-- FOOTER -->
+<footer>
+  <span>Tenaris · <strong>Industrial Operations</strong> · Process Technology</span>
+  <span>Data as of <strong>Sep 2025</strong> · 62 facilities · 14 countries</span>
+</footer>
 
 <script>
-// ═══════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════
-const PROCESSES = [
-  "Steel Making","Hot Rolling","Cold Drawn","Welded",
-  "Upsetting","Finishing","Coupling & Premium","Coating","NDT","GE-Others"
+// ═══════════════════════════════
+// DATA
+// ═══════════════════════════════
+const PROCS = [
+  {key:'SM', label:'Steel Making',       color:'#C8102E'},
+  {key:'HR', label:'Hot Rolling',        color:'#1A3A6B'},
+  {key:'CD', label:'Cold Drawn',         color:'#2E7D32'},
+  {key:'WE', label:'Welded',             color:'#E65100'},
+  {key:'UP', label:'Upsetting',          color:'#6A1B9A'},
+  {key:'FI', label:'Finishing',          color:'#00838F'},
+  {key:'CP', label:'Coupling & Premium', color:'#F9A825'},
+  {key:'CO', label:'Coating',            color:'#AD1457'},
+  {key:'ND', label:'NDT',                color:'#546E7A'},
+  {key:'GE', label:'GE-Others',          color:'#795548'},
 ];
 
-const PROCESS_COLORS = [
-  "#C8102E","#1565C0","#2E7D32","#E65100",
-  "#6A1B9A","#00838F","#F9A825","#AD1457","#37474F","#795548"
+const REGIONS = [
+  {id:'and', code:'AND', label:'Andean',              lat:-2,  lng:-76,  vals:[0,0,0,0,0,1,5,0,0,1]},
+  {id:'bra', code:'BRA', label:'Brazil',              lat:-15, lng:-52,  vals:[0,0,0,9,0,0,0,2,0,1]},
+  {id:'can', code:'CAN', label:'Canada',              lat:54,  lng:-110, vals:[0,2,0,1,5,2,0,1,0,1]},
+  {id:'eeu', code:'EEU', label:'East Europe, Ns & Ssa', lat:46, lng:28,  vals:[3,2,2,0,2,2,2,0,0,3]},
+  {id:'eur', code:'EUR', label:'Europe',              lat:44,  lng:12,   vals:[4,1,1,0,0,2,1,7,0,9]},
+  {id:'mex', code:'MEX', label:'Mexico',              lat:22,  lng:-101, vals:[4,9,1,0,3,7,11,0,0,4]},
+  {id:'mea', code:'MEA', label:'Middle East & Asia',  lat:24,  lng:65,   vals:[0,0,0,0,0,5,8,0,0,1]},
+  {id:'sau', code:'SAU', label:'Saudi',               lat:24,  lng:46,   vals:[0,0,0,7,0,2,1,0,2,0]},
+  {id:'arg', code:'ARG', label:'Argentina',           lat:-34, lng:-63,  vals:[9,3,2,3,3,3,6,0,0,11]},
+  {id:'usa', code:'USA', label:'USA',                 lat:35,  lng:-97,  vals:[5,0,0,4,0,10,1,0,0,13]},
 ];
 
-// Headcount by Region+Process  [SM, HR, CD, WE, UP, FI, C&P, CO, NDT, GEO]
-const REGION_DATA = {
-  "Industrial (Corporate)": {
-    ou1:"Industrial", ou2:"Industrial (Corporate)",
-    lat:null, lng:null,
-    hcTotal: null,
-    processes:[10,12,0,4,7,0,3,0,13,1],
-    color:"#C8102E"
-  },
-  "Andean": {
-    ou1:"Business Operations", ou2:"Andean",
-    lat:-4.0, lng:-77.0,
-    mapCountries:["COL","ECU"],
-    hcTotal: 772+47,
-    processes:[0,0,0,0,0,1,5,0,0,1],
-    color:"#1565C0"
-  },
-  "Brazil": {
-    ou1:"Business Operations", ou2:"Brazil",
-    lat:-14.2, lng:-51.9,
-    mapCountries:["BRA"],
-    hcTotal: 1063,
-    processes:[0,0,0,9,0,0,0,2,0,1],
-    color:"#1565C0"
-  },
-  "Canada": {
-    ou1:"Business Operations", ou2:"Canada",
-    lat:56.1, lng:-106.3,
-    mapCountries:["CAN"],
-    hcTotal: 967,
-    processes:[0,2,0,1,5,2,0,1,0,1],
-    color:"#1565C0"
-  },
-  "East Europe, Ns & Ssa": {
-    ou1:"Business Operations", ou2:"East Europe, Ns & Ssa",
-    lat:47.5, lng:30.0,
-    mapCountries:["ROM","NOR","NIG"],
-    hcTotal: 1492+81+50,
-    processes:[3,2,2,0,2,2,2,0,0,3],
-    color:"#2E7D32"
-  },
-  "Europe": {
-    ou1:"Business Operations", ou2:"Europe",
-    lat:46.5, lng:11.0,
-    mapCountries:["ITA","UK"],
-    hcTotal: 1568+68,
-    processes:[4,1,1,0,0,2,1,7,0,9],
-    color:"#2E7D32"
-  },
-  "Mexico": {
-    ou1:"Business Operations", ou2:"Mexico",
-    lat:23.6, lng:-102.6,
-    mapCountries:["MEX"],
-    hcTotal: 4753,
-    processes:[4,9,1,0,3,7,11,0,0,4],
-    color:"#1565C0"
-  },
-  "Middle East & Asia": {
-    ou1:"Business Operations", ou2:"Middle East & Asia",
-    lat:25.0, lng:67.0,
-    mapCountries:["UAE","KAZ","CHI","IND"],
-    hcTotal: 124+20+208+481,
-    processes:[0,0,0,0,0,5,8,0,0,1],
-    color:"#E65100"
-  },
-  "Saudi": {
-    ou1:"Business Operations", ou2:"Saudi",
-    lat:23.9, lng:45.1,
-    mapCountries:["SAU"],
-    hcTotal: 598,
-    processes:[0,0,0,7,0,2,1,0,2,0],
-    color:"#E65100"
-  },
-  "Argentina": {
-    ou1:"Business Operations", ou2:"Argentina",
-    lat:-38.4, lng:-63.6,
-    mapCountries:["ARG"],
-    hcTotal: 4183,
-    processes:[9,3,2,3,3,3,6,0,0,11],
-    color:"#6A1B9A"
-  },
-  "USA": {
-    ou1:"Business Operations", ou2:"USA",
-    lat:37.1, lng:-95.7,
-    mapCountries:["USA"],
-    hcTotal: 2869,
-    processes:[5,0,0,4,0,10,1,0,0,13],
-    color:"#1565C0"
-  }
-};
+const CORP_VALS = [10,12,0,4,7,0,3,0,13,1];
 
-// Country-level headcount for "headcount" view
-const COUNTRY_HC = {
-  "NOR":{lat:60.5, lng:8.5, label:"Norway", hc:81},
-  "UK": {lat:51.5, lng:-0.1, label:"United Kingdom", hc:68},
-  "ROM":{lat:45.9, lng:24.9, label:"Romania", hc:1492},
-  "KAZ":{lat:48.0, lng:66.9, label:"Kazakhstan", hc:20},
-  "CHI":{lat:35.9, lng:104.2,label:"China", hc:208},
-  "CAN":{lat:56.1, lng:-106.3,label:"Canada", hc:967},
-  "ITA":{lat:41.9, lng:12.5, label:"Italy", hc:1568},
-  "UAE":{lat:23.4, lng:53.8, label:"UAE", hc:124},
-  "USA":{lat:37.1, lng:-95.7, label:"USA", hc:2869},
-  "SAU":{lat:23.9, lng:45.1, label:"Saudi Arabia", hc:598},
-  "IND":{lat:20.6, lng:78.9, label:"India", hc:481},
-  "MEX":{lat:23.6, lng:-102.6,label:"Mexico", hc:4753},
-  "COL":{lat:4.6,  lng:-74.1, label:"Colombia", hc:772},
-  "NIG":{lat:9.1,  lng:8.7,  label:"Nigeria", hc:50},
-  "ECU":{lat:-1.8, lng:-78.2, label:"Ecuador", hc:47},
-  "BRA":{lat:-14.2,lng:-51.9, label:"Brazil", hc:1063},
-  "ARG":{lat:-38.4,lng:-63.6, label:"Argentina", hc:4183}
-};
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let activeProcs = new Set(PROCS.map(p=>p.key));
+let activeRegs  = new Set(REGIONS.map(r=>r.id));
+let mapMarkers  = {};
 
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
-let activeView       = "tech";   // "tech" | "headcount"
-let activeProcesses  = new Set(PROCESSES);
-let activeRegions    = new Set(Object.keys(REGION_DATA));
-let activeTypes      = new Set(["Corporate","Regional"]);
-
-// ═══════════════════════════════════════════════
-//  MAP INIT
-// ═══════════════════════════════════════════════
-const map = L.map("map", {
-  center: [20, 10], zoom: 2, minZoom:2, maxZoom:8,
-  zoomControl: true
-});
-
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains:"abcd", maxZoom:19
+// ═══════════════════════════════
+// MAP INIT
+// ═══════════════════════════════
+const map = L.map('map',{center:[20,10],zoom:2,minZoom:2,maxZoom:7,zoomControl:true});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; CARTO', subdomains:'abcd', maxZoom:19
 }).addTo(map);
 
-let techMarkers = [];
-let hcMarkers   = [];
-
-function totalForRegion(regionKey, filteredProcesses){
-  const d = REGION_DATA[regionKey];
-  return d.processes.reduce((s,v,i) => s + (filteredProcesses.has(PROCESSES[i]) ? v : 0), 0);
-}
-
-function makeTechMarkers(){
-  techMarkers.forEach(m=>m.remove());
-  techMarkers = [];
-  Object.entries(REGION_DATA).forEach(([key, d]) => {
-    if(d.lat === null) return;
-    if(!activeRegions.has(key)) return;
-    const typeTag = d.ou1 === "Industrial" ? "Corporate" : "Regional";
-    if(!activeTypes.has(typeTag)) return;
-
-    const total = totalForRegion(key, activeProcesses);
-    if(total === 0) return;
-
-    const radius = Math.max(18, Math.sqrt(total) * 5.5);
-    const marker = L.circleMarker([d.lat, d.lng], {
-      radius: radius, color: d.color, fillColor: d.color,
-      fillOpacity: 0.75, weight: 2
-    }).addTo(map);
-
-    // Build popup
-    let rows = "";
-    PROCESSES.forEach((p, i) => {
-      if(!activeProcesses.has(p)) return;
-      if(d.processes[i] === 0) return;
-      rows += `<tr><td>${p}</td><td>${d.processes[i]}</td></tr>`;
-    });
-
-    marker.bindPopup(`
-      <div style="min-width:220px">
-        <div class="popup-title">📍 ${key}</div>
-        <div class="popup-hc">
-          ${d.ou1 === "Industrial" ? "🏢 Corporativo (Global)" : "🌍 " + d.ou1}<br>
-          <strong>${total}</strong> tecnólogo${total!==1?"s":""} (filtro actual)
-          ${d.hcTotal ? `<br><span style='font-size:.7rem;color:#888'>HC total planta: ${d.hcTotal.toLocaleString()}</span>` : ""}
-        </div>
-        ${rows ? `<table class="popup-table">
-          <tr><th>Proceso</th><th>Tecnólogos</th></tr>
-          ${rows}
-        </table>` : "<em style='font-size:.75rem;color:#aaa'>Sin datos para los filtros activos</em>"}
-      </div>
-    `);
-
-    // Label
-    const icon = L.divIcon({
-      html: `<div style="
-        background:${d.color};color:#fff;border-radius:4px;
-        padding:2px 5px;font-size:10px;font-weight:700;
-        white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">
-        ${total}
-      </div>`,
-      className:"", iconAnchor:[0,0]
-    });
-    const labelMarker = L.marker([d.lat, d.lng], {icon}).addTo(map);
-    techMarkers.push(marker, labelMarker);
-  });
-}
-
-function makeHCMarkers(){
-  hcMarkers.forEach(m=>m.remove());
-  hcMarkers=[];
-  Object.entries(COUNTRY_HC).forEach(([code,d])=>{
-    const radius = Math.max(14, Math.sqrt(d.hc) * 1.1);
-    const m = L.circleMarker([d.lat, d.lng],{
-      radius:radius, color:"#1a1a2e", fillColor:"#C8102E",
-      fillOpacity:0.65, weight:2
-    }).addTo(map);
-    m.bindPopup(`
-      <div>
-        <div class="popup-title">🏭 ${d.label}</div>
-        <div class="popup-hc">Headcount Total: <strong>${d.hc.toLocaleString()}</strong></div>
-      </div>
-    `);
-    const icon = L.divIcon({
-      html:`<div style="background:#1a1a2e;color:#fff;border-radius:4px;
-        padding:2px 5px;font-size:10px;font-weight:700;white-space:nowrap;
-        box-shadow:0 1px 4px rgba(0,0,0,.3)">${code}: ${d.hc.toLocaleString()}</div>`,
-      className:"", iconAnchor:[0,0]
-    });
-    const lm = L.marker([d.lat,d.lng],{icon}).addTo(map);
-    hcMarkers.push(m, lm);
-  });
-}
-
-// ═══════════════════════════════════════════════
-//  VIEW TOGGLE
-// ═══════════════════════════════════════════════
-function setView(v){
-  activeView = v;
-  document.getElementById("btnViewTC").classList.toggle("active", v==="tech");
-  document.getElementById("btnViewHC").classList.toggle("active", v==="headcount");
-  if(v==="tech"){
-    hcMarkers.forEach(m=>m.remove()); hcMarkers=[];
-    makeTechMarkers();
-  } else {
-    techMarkers.forEach(m=>m.remove()); techMarkers=[];
-    makeHCMarkers();
-  }
-  updateChart();
-}
-
-// ═══════════════════════════════════════════════
-//  BUILD FILTER CHECKBOXES
-// ═══════════════════════════════════════════════
-const processContainer = document.getElementById("filterProcess");
-PROCESSES.forEach((p,i)=>{
-  const lbl = document.createElement("label");
-  lbl.innerHTML = `<input type='checkbox' checked data-proc='${p}'/>
-    <span class='dot' style='background:${PROCESS_COLORS[i]}'></span>${p}`;
-  lbl.querySelector("input").addEventListener("change", e=>{
-    if(e.target.checked) activeProcesses.add(p); else activeProcesses.delete(p);
-    refreshMap(); updateChart();
-  });
-  processContainer.appendChild(lbl);
+// Close dropdown when clicking on map
+map.on('click', ()=>{
+  document.getElementById('dropPanel').classList.remove('open');
+  document.getElementById('dropBtn').classList.remove('open');
 });
 
-const regionContainer = document.getElementById("filterRegion");
-Object.keys(REGION_DATA).forEach(key=>{
-  const d = REGION_DATA[key];
-  const lbl = document.createElement("label");
-  lbl.innerHTML = `<input type='checkbox' checked data-reg='${key}'/>
-    <span class='dot' style='background:${d.color}'></span>${key}`;
-  lbl.querySelector("input").addEventListener("change", e=>{
-    if(e.target.checked) activeRegions.add(key); else activeRegions.delete(key);
-    refreshMap(); updateChart();
+// ═══════════════════════════════
+// BUILD PROCESS TABLE
+// ═══════════════════════════════
+function buildProcTable(){
+  const tbody = document.getElementById('procTbody');
+  tbody.innerHTML = '';
+  PROCS.forEach((p,i)=>{
+    const tr = document.createElement('tr');
+    tr.id = 'ptr-'+p.key;
+    if(!activeProcs.has(p.key)) tr.classList.add('inactive');
+    const total = calcProcTotal(i);
+    tr.innerHTML = `
+      <td><div class="proc-cell">
+        <div class="psq" style="background:${p.color}"></div>
+        <span class="proc-name">${p.label}</span>
+      </div></td>
+      <td id="ptv-${p.key}">${total}</td>`;
+    tr.onclick = ()=>toggleProc(p.key);
+    tbody.appendChild(tr);
   });
-  regionContainer.appendChild(lbl);
-});
-
-const typeContainer = document.getElementById("filterType");
-[["Corporate","#C8102E"],["Regional","#1565C0"]].forEach(([t,c])=>{
-  const lbl = document.createElement("label");
-  lbl.innerHTML = `<input type='checkbox' checked data-type='${t}'/>
-    <span class='dot' style='background:${c}'></span>${t}`;
-  lbl.querySelector("input").addEventListener("change", e=>{
-    if(e.target.checked) activeTypes.add(t); else activeTypes.delete(t);
-    refreshMap(); updateChart();
-  });
-  typeContainer.appendChild(lbl);
-});
-
-function resetFilters(){
-  activeProcesses = new Set(PROCESSES);
-  activeRegions   = new Set(Object.keys(REGION_DATA));
-  activeTypes     = new Set(["Corporate","Regional"]);
-  document.querySelectorAll(".filter-group input[type=checkbox]").forEach(cb=>cb.checked=true);
-  refreshMap(); updateChart();
+  updateProcGrandTotal();
 }
 
-function refreshMap(){
-  if(activeView==="tech") makeTechMarkers();
-  else makeHCMarkers();
+function calcProcTotal(i){
+  return REGIONS.filter(r=>activeRegs.has(r.id)).reduce((s,r)=>s+r.vals[i],0);
 }
 
-// ═══════════════════════════════════════════════
-//  CHART
-// ═══════════════════════════════════════════════
-const ctx = document.getElementById("processChart").getContext("2d");
-const processChart = new Chart(ctx, {
-  type:"bar",
-  data:{
-    labels: PROCESSES,
-    datasets:[{
-      label:"Tecnólogos",
-      data: new Array(PROCESSES.length).fill(0),
-      backgroundColor: PROCESS_COLORS,
-      borderRadius: 5
-    }]
-  },
-  options:{
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false} },
-    scales:{
-      x:{ ticks:{font:{size:9}}, grid:{display:false} },
-      y:{ ticks:{font:{size:9}}, beginAtZero:true, grid:{color:"#f0f0f0"} }
+function updateProcTable(){
+  PROCS.forEach((p,i)=>{
+    const val = calcProcTotal(i);
+    const el = document.getElementById('ptv-'+p.key);
+    if(el) el.textContent = val;
+    const tr = document.getElementById('ptr-'+p.key);
+    if(tr) tr.classList.toggle('inactive', !activeProcs.has(p.key));
+  });
+  updateProcGrandTotal();
+}
+
+function updateProcGrandTotal(){
+  let total = 0;
+  PROCS.forEach((p,i)=>{
+    if(activeProcs.has(p.key)){
+      total += REGIONS.filter(r=>activeRegs.has(r.id)).reduce((s,r)=>s+r.vals[i],0);
     }
+  });
+  document.getElementById('procGrandTotal').textContent = total;
+}
+
+// ═══════════════════════════════
+// BUILD CORPORATE TABLE
+// ═══════════════════════════════
+function buildCorpTable(){
+  const tbody = document.getElementById('corpTbody');
+  tbody.innerHTML = '';
+  let total = 0;
+  PROCS.forEach((p,i)=>{
+    if(CORP_VALS[i]===0) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="proc-cell">
+        <div class="psq" style="background:${p.color}"></div>
+        <span class="proc-name">${p.label}</span>
+      </div></td>
+      <td>${CORP_VALS[i]}</td>`;
+    tbody.appendChild(tr);
+    total += CORP_VALS[i];
+  });
+  document.getElementById('corpTotal').textContent = total;
+}
+
+// ═══════════════════════════════
+// BUILD REGION DROPDOWN
+// ═══════════════════════════════
+function buildRegionDropdown(){
+  const container = document.getElementById('regionCheckboxes');
+  REGIONS.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'pbi-item';
+    div.innerHTML = `
+      <input type="checkbox" id="rc-${r.id}" checked onchange="onRegionChange('${r.id}',this.checked)"/>
+      <label for="rc-${r.id}">${r.label}</label>`;
+    container.appendChild(div);
+  });
+  updateDropLabel();
+}
+
+function toggleDropdown(){
+  const panel = document.getElementById('dropPanel');
+  const btn   = document.getElementById('dropBtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function onRegionChange(id, checked){
+  if(checked) activeRegs.add(id); else activeRegs.delete(id);
+  updateDropLabel();
+  refreshAll();
+}
+
+function selectAllRegions(){
+  REGIONS.forEach(r=>{
+    activeRegs.add(r.id);
+    document.getElementById('rc-'+r.id).checked = true;
+  });
+  updateDropLabel(); refreshAll();
+}
+
+function clearAllRegions(){
+  REGIONS.forEach(r=>{
+    activeRegs.delete(r.id);
+    document.getElementById('rc-'+r.id).checked = false;
+  });
+  updateDropLabel(); refreshAll();
+}
+
+function updateDropLabel(){
+  const n = activeRegs.size;
+  const total = REGIONS.length;
+  const btn = document.getElementById('dropLabel');
+  if(n===total) btn.textContent = `All Regions (${total})`;
+  else if(n===0) btn.textContent = 'No regions selected';
+  else {
+    const names = REGIONS.filter(r=>activeRegs.has(r.id)).map(r=>r.code).join(', ');
+    btn.textContent = names.length>28 ? n+' regions selected' : names;
+  }
+}
+
+// Close dropdown clicking outside
+document.addEventListener('click', e=>{
+  const dd = document.getElementById('regionDropdown');
+  if(!dd.contains(e.target)){
+    document.getElementById('dropPanel').classList.remove('open');
+    document.getElementById('dropBtn').classList.remove('open');
   }
 });
 
-function updateChart(){
-  const vals = PROCESSES.map((p,i)=>{
-    if(!activeProcesses.has(p)) return 0;
-    return Object.entries(REGION_DATA).reduce((s,[key,d])=>{
-      const typeTag = d.ou1==="Industrial"?"Corporate":"Regional";
-      if(!activeRegions.has(key)) return s;
-      if(!activeTypes.has(typeTag)) return s;
-      return s + d.processes[i];
-    },0);
+// ═══════════════════════════════
+// MAP MARKERS
+// ═══════════════════════════════
+function makeMarkerHTML(r){
+  // Build tiny squares (3x3) for active processes with count > 0
+  const squares = [];
+  PROCS.forEach((p,i)=>{
+    if(r.vals[i]>0 && activeProcs.has(p.key)){
+      squares.push(`<div style="width:4px;height:4px;border-radius:1px;background:${p.color};flex-shrink:0;"></div>`);
+    }
   });
-  processChart.data.datasets[0].data = vals;
-  const total = vals.reduce((a,b)=>a+b,0);
-  document.getElementById("chartSubtitle").textContent =
-    `— ${total} tecnólogos con filtros actuales`;
-  processChart.update();
+  if(squares.length===0) return null;
+
+  // Arrange in rows of 5
+  const rows=[];
+  for(let i=0;i<squares.length;i+=5){
+    rows.push(`<div style="display:flex;gap:1px;">${squares.slice(i,i+5).join('')}</div>`);
+  }
+  const sqGrid = `<div style="display:inline-flex;flex-direction:column;gap:1px;vertical-align:top;">${rows.join('')}</div>`;
+
+  // Filtered total
+  const total = PROCS.reduce((s,p,i)=> s+(activeProcs.has(p.key)?r.vals[i]:0), 0);
+
+  return `<div style="display:flex;align-items:flex-start;gap:4px;cursor:pointer;">
+    ${sqGrid}
+    <span style="font-size:9px;font-weight:700;color:#1B2A4A;white-space:nowrap;line-height:1.2;margin-top:1px;">${r.code}: ${total}</span>
+  </div>`;
 }
 
-// ═══════════════════════════════════════════════
-//  DATA TABLE MODAL
-// ═══════════════════════════════════════════════
-function buildTable(){
-  const t = document.getElementById("dataTable");
-  // Header
-  let html = "<thead><tr><th>OU Level 1</th><th>OU Level 2 / Región</th>";
-  PROCESSES.forEach(p=> html += `<th>${p}</th>`);
-  html += "<th>TOTAL</th></tr></thead><tbody>";
+function placeMarkers(){
+  Object.values(mapMarkers).forEach(m=>{if(m)m.remove();});
+  mapMarkers={};
 
-  Object.entries(REGION_DATA).forEach(([key,d])=>{
-    const isIndustrial = d.ou1==="Industrial";
-    const rowClass = isIndustrial ? "industrial-row" : "";
-    const tot = d.processes.reduce((a,b)=>a+b,0);
-    html += `<tr class="${rowClass}"><td>${d.ou1}</td><td>${key}</td>`;
-    d.processes.forEach(v=>{
-      html += v>0
-        ? `<td class="cell-value">${v}</td>`
-        : `<td class="cell-zero">—</td>`;
-    });
-    html += `<td class="cell-value" style="background:#fff0f2">${tot}</td></tr>`;
+  REGIONS.forEach(r=>{
+    if(!activeRegs.has(r.id)) return;
+    const html = makeMarkerHTML(r);
+    if(!html) return;
+    const icon = L.divIcon({html, className:'', iconAnchor:[0,0]});
+    const m = L.marker([r.lat, r.lng],{icon}).addTo(map);
+    m.bindPopup(makePopup(r), {maxWidth:240});
+    mapMarkers[r.id] = m;
   });
-
-  // Grand totals
-  const grandTot = PROCESSES.map((_,i)=>
-    Object.values(REGION_DATA).reduce((s,d)=>s+d.processes[i],0)
-  );
-  html += `<tr class="total-row"><td colspan="2">Grand Total</td>`;
-  grandTot.forEach(v=> html+=`<td>${v}</td>`);
-  html += `<td>${grandTot.reduce((a,b)=>a+b,0)}</td></tr>`;
-  html += "</tbody>";
-  t.innerHTML = html;
 }
 
-function openModal()  { buildTable(); document.getElementById("modalOverlay").classList.add("open"); }
-function closeModal() { document.getElementById("modalOverlay").classList.remove("open"); }
-function closeModalOutside(e){ if(e.target===document.getElementById("modalOverlay")) closeModal(); }
+function makePopup(r){
+  let rows='', total=0;
+  PROCS.forEach((p,i)=>{
+    const v=r.vals[i];
+    if(v>0 && activeProcs.has(p.key)){
+      total+=v;
+      rows+=`<div class="pu-row">
+        <div class="pu-proc">
+          <div class="psq" style="background:${p.color};width:8px;height:8px;border-radius:1px;"></div>
+          ${p.label}
+        </div>
+        <div class="pu-count">${v}</div>
+      </div>`;
+    }
+  });
+  return `<div>
+    <div class="pu-head"><h4>📍 ${r.label}</h4><p>Business Operations</p></div>
+    <div class="pu-body">
+      ${rows||'<div style="color:#aaa;font-size:.72rem;padding:4px 0;">No processes match current filters</div>'}
+      <div class="pu-total"><span>Technologists</span><span>${total}</span></div>
+    </div>
+  </div>`;
+}
 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-makeTechMarkers();
-updateChart();
+// ═══════════════════════════════
+// FILTERS
+// ═══════════════════════════════
+function toggleProc(key){
+  if(activeProcs.has(key)) activeProcs.delete(key);
+  else activeProcs.add(key);
+  refreshAll();
+}
+
+function refreshAll(){
+  updateProcTable();
+  placeMarkers();
+  updateKPIs();
+}
+
+// ═══════════════════════════════
+// KPIs
+// ═══════════════════════════════
+function updateKPIs(){
+  let reg=0, ous=0;
+  REGIONS.forEach(r=>{
+    if(!activeRegs.has(r.id)) return;
+    const t = PROCS.reduce((s,p,i)=>s+(activeProcs.has(p.key)?r.vals[i]:0),0);
+    if(t>0) ous++;
+    reg+=t;
+  });
+  const corp = PROCS.reduce((s,p,i)=>s+(activeProcs.has(p.key)?CORP_VALS[i]:0),0);
+  const total = reg+corp;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-corp').textContent  = corp;
+  document.getElementById('kpi-reg').textContent   = reg;
+  document.getElementById('kpi-ou').textContent    = ous;
+}
+
+// ═══════════════════════════════
+// RESET
+// ═══════════════════════════════
+function resetAll(){
+  activeProcs = new Set(PROCS.map(p=>p.key));
+  activeRegs  = new Set(REGIONS.map(r=>r.id));
+  REGIONS.forEach(r=>{ document.getElementById('rc-'+r.id).checked=true; });
+  updateDropLabel();
+  refreshAll();
+}
+
+// ═══════════════════════════════
+// INIT
+// ═══════════════════════════════
+buildProcTable();
+buildCorpTable();
+buildRegionDropdown();
+placeMarkers();
+updateKPIs();
 </script>
 </body>
 </html>
